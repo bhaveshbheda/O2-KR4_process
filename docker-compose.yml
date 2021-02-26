@@ -1,0 +1,40 @@
+version: "3"
+services:
+    elasticsearch:
+        image: "docker.elastic.co/elasticsearch/elasticsearch:7.2.0"
+        environment:
+            - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+            - "discovery.type=single-node"
+        ports:
+            - "9200:9200"
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+
+    kibana:
+        image: "docker.elastic.co/kibana/kibana:7.2.0"
+        ports:
+            - "5601:5601"
+
+    filebeat:
+        image: "docker.elastic.co/beats/filebeat:7.2.0"
+        user: root
+        volumes:
+            - /home/bhaveshbheda/.pm2/logs:/usr/share/filebeat/logs/pm2
+
+    logstash:
+        build:
+          context: logstash/
+          args:
+            ELK_VERSION: $ELK_VERSION
+        volumes:
+              - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+              - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+        ports:
+          - "5044:5044"
+          - "5000:5000/tcp"
+          - "5000:5000/udp"
+          - "9600:9600"
+        environment:
+          LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+volumes:
+    elasticsearch_data:
